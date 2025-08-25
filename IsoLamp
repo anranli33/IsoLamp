@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+
+# ------------------------------------------------- #
+# IsoLamp wrapper script (modified for QUANTIFIER)
+# ------------------------------------------------- #
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. $SCRIPT_DIR/bin/IsoLamp_functions.sh
+
+parameters_file=""
+mode="all"
+QUANTIFIER="salmon"  # default
+
+# ------------------------------------------------- #
+# Help message
+# ------------------------------------------------- #
+function show_help() {
+  echo "IsoLamp v1.0"
+  echo "Usage: IsoLamp -p params.ini [-m mode] [-q quantifier]"
+  echo
+  echo "Options:"
+  echo "  -h                   Show this help message and exit"
+  echo "  -p FILE              Specify the parameters file"
+  echo "  -m CHAR              Specify the mode to run [all]"
+  echo "  -q STRING            Specify isoform quantifier [salmon|oarfish] (default: salmon)"
+  echo
+  echo "Example:"
+  echo "  IsoLamp -p your_params.ini -m isoform_discovery -q oarfish"
+  exit 0
+}
+
+# ------------------------------------------------- #
+# Parse command-line options
+# ------------------------------------------------- #
+while getopts "p:m:q:h" opt
+do
+  case $opt in
+    p) parameters_file="$OPTARG" ;;
+    m) mode="$OPTARG" ;;
+    q) QUANTIFIER="$OPTARG" ;;
+    h) show_help ;;
+    \?) echo "Invalid option: -$OPTARG" >&2; show_help ;;
+    :) echo "Option -$OPTARG requires an argument." >&2; show_help ;;
+  esac
+done
+
+# ------------------------------------------------- #
+# Check parameters file
+# ------------------------------------------------- #
+if [ -z "$parameters_file" ]; then
+  echo "Please provide parameters file."
+  show_help
+fi
+
+source "$parameters_file"
+log_file="$OUTPUT_NAME/IsoLamp.logs"
+
+echo "QUANTIFIER=$QUANTIFIER"
+
+# ------------------------------------------------- #
+# Helper functions
+# ------------------------------------------------- #
+function redirect_output() {
+    { "$@" ; } >> "$log_file" 2>&1
+}
+
+function make_directories() {
+    if [ -d "$OUTPUT_NAME" ]; then
+        echo "$OUTPUT_NAME already exists"
+        exit 1
+    fi
+    mkdir -p "$OUTPUT_NAME" \
+             "$OUTPUT_NAME/temp_files" \
+             "$OUTPUT_NAME/mapped_data" \
+             "$OUTPUT_NAME/bambu" \
+             "$OUTPUT_NAME/updated_transcriptome" \
+             "$OUTPUT_NAME/annotated_isoforms"
+}
+
+# ------------------------------------------------- #
+# Modules
+# ------------------------------------------------- #
+function preprocessing_module() {
+    filter_reference_files
+    check_for_fastq_or_fasta_files
+    concat_files
+    downsampling_function
+}
+
+function mapping_module() {
+    mapping_genome_function
+    extract_mapped_genome_reads
+    get_accurate_reads
+    get_JWRs
+}
+
+function isoform_discovery_module() {
+    set_skip_mapping_vars
+    run_bambu_function
+}
+
+# Quantification and analysis with QUANTIFIER
+function quant_analysis_module() {
+    read_count_function_first_pass
+    primer_site_function
+
+    if [ "$QUANTIFIER" = "oarfish" ]; then
+        echo "Running quantification with oarfish..."
+        create_metatranscriptome
+        oarfish_function
+        combine_quants_function
+        read_count_function_second_pass
+    else
+        echo "Running quantification with Salmon..."
+        create_metatranscriptome
+        remapping_function
+        combine_quants_function
+        read_count_function_second_pass
+    fi
+
+    plot_PCA
+    plot_accuracy
+    compare_proportions_test
+    gffcomp_function
+
+    echo "Generating report..."
+    generate_report_function
+}
+
+echo \
+"
+██ ███████  ██████  ██       █████  ███    ███ ██████  
+██ ██      ██    ██ ██      ██   ██ ████  ████ ██   ██ 
+██ ███████ ██    ██ ██      ███████ ██ ████ ██ ██████  
+██      ██ ██    ██ ██      ██   ██ ██  ██  ██ ██      
+██ ███████  ██████  ███████ ██   ██ ██      ██ ██  
+"
+
+
+# Depending on the mode, execute different modules
+case "$mode" in
+  all)
+  	make_directories
+    preprocessing_module
+	mapping_module
+	isoform_discovery_module
+	quant_analysis_module
+    ;;
+  isoform_discovery)
+	isoform_discovery_module
+	quant_analysis_module
+    ;;
+  isoform_annotation)
+	set_skip_mapping_vars
+	quant_analysis_module
+    ;;
+  *)
+    echo "Invalid mode specified."
+    exit 1
+    ;;
+esac
