@@ -33,7 +33,6 @@ cd IsoLamp
 chmod +x IsoLamp
 conda env create -f IsoLamp_env.yml
 conda activate IsoLamp
-./setup_oarfish.sh
 ```
 
 ## General Command Line Usage
@@ -88,6 +87,7 @@ Packages:
   - gffread
   - gffcompare
   - minimap2
+  - oarfish
 
 
   R and libraries:

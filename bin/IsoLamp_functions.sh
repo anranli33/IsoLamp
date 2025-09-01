@@ -117,7 +117,7 @@ function downsampling_function() {
     		downsampling=TRUE # set to the default value if empty
   	fi
 
-	if [ "$downsampling" == TRUE ]
+	if [ "$downsampling" == "TRUE" ]
 	then
 		
 		if [ -z "$number_reads_downsample" ]
@@ -160,6 +160,14 @@ function downsampling_function() {
 		path_to_reads=$OUTPUT_NAME/temp_files/downsampled_reads
 		
 	fi
+
+	if [ "$downsampling" == "FALSE" ]
+	then
+		# set path to reads
+		echo "Skipping downsampling step"
+		path_to_reads=$OUTPUT_NAME/temp_files/reads
+	fi
+
 
 }
 
@@ -875,11 +883,11 @@ function generate_report_function() {
 		total_reads_input=$( cat $OUTPUT_NAME/temp_files/reads/*.f* | grep "^[>@]" | wc -l )
 	fi
 
-	if ls $OUTPUT_NAME/temp_files/downsampled_reads/*.gz 1> /dev/null 2>&1 
+	if ls "$path_to_reads"/*.gz 1> /dev/null 2>&1 
 	then
-		:
+    	:
 	else
-		total_reads_post_downsample=$(cat $OUTPUT_NAME/temp_files/downsampled_reads/*.f* | grep "^[>@]" | sort | uniq | wc -l)
+    	total_reads_post_downsample=$(cat "$path_to_reads"/*.f* | grep "^[>@]" | sort | uniq | wc -l)
 	fi
 	
 	number_reads_mapped=$(cat $OUTPUT_NAME/temp_files/reads_ids_mapped_to_genome.txt | wc -l)

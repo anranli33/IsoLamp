@@ -9,7 +9,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 parameters_file=""
 mode="all"
-QUANTIFIER="salmon"  # default
+QUANTIFIER="oarfish"  # default
 
 # ------------------------------------------------- #
 # Help message
@@ -22,7 +22,7 @@ function show_help() {
   echo "  -h                   Show this help message and exit"
   echo "  -p FILE              Specify the parameters file"
   echo "  -m CHAR              Specify the mode to run [all]"
-  echo "  -q STRING            Specify isoform quantifier [salmon|oarfish] (default: salmon)"
+  echo "  -q STRING            Specify isoform quantifier [salmon|oarfish] (default: oarfish)"
   echo
   echo "Example:"
   echo "  IsoLamp -p your_params.ini -m isoform_discovery -q oarfish"
@@ -55,7 +55,6 @@ fi
 source "$parameters_file"
 log_file="$OUTPUT_NAME/IsoLamp.logs"
 
-echo "QUANTIFIER=$QUANTIFIER"
 
 # ------------------------------------------------- #
 # Helper functions
@@ -104,19 +103,28 @@ function quant_analysis_module() {
     read_count_function_first_pass
     primer_site_function
 
+    # set default if not provided
+    if [ -z "$QUANTIFIER" ]; then
+        QUANTIFIER="oarfish"
+    fi
+
     if [ "$QUANTIFIER" = "oarfish" ]; then
-        echo "Running quantification with oarfish..."
+        echo "Running quantification with Oarfish..."
         create_metatranscriptome
         oarfish_function
         combine_quants_function
         read_count_function_second_pass
-    else
+    elif [ "$QUANTIFIER" = "salmon" ]; then
         echo "Running quantification with Salmon..."
         create_metatranscriptome
         remapping_function
         combine_quants_function
         read_count_function_second_pass
+    else
+        echo "Error: Unsupported QUANTIFIER value '$QUANTIFIER'. Please use 'oarfish' or 'salmon'."
+        exit 1
     fi
+
 
     plot_PCA
     plot_accuracy

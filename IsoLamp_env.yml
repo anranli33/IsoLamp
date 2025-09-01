@@ -27,6 +27,7 @@ dependencies:
   - r-reshape
   - r-purrr
   - r-ggplot2
+  - oarfish
   - pip:
     - pandas
     - pysam
