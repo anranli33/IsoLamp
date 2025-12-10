@@ -24,7 +24,7 @@
 ## Installation
 Download the pipeline with Git:
 ```
-git clone https://github.com/ClarkLaboratory/IsoLamp.git
+git clone https://github.com/anranli33/IsoLamp.git
 ```
 
 Make the script executable and create a conda environment with required dependencies:
