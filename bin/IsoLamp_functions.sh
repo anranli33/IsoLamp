@@ -761,11 +761,11 @@ function combine_quants_function() {
 	echo "Generating output files..."
 
 	# check quantifier and call appropriate R script
-    if [ -z "$QUANTIFIER" ] || [ "$QUANTIFIER" == "salmon" ]; then
-        echo "Quantifier: Salmon (default)"
+    if  [ "$QUANTIFIER" == "salmon" ]; then
+        echo "Quantifier: Salmon"
         Rscript $SCRIPT_DIR/bin/combine_salmon_quants.R -e $ENSG_ID -m $TPM_minimum -s $samples_minimum -o $OUTPUT_NAME
-    elif [ "$QUANTIFIER" == "oarfish" ]; then
-        echo "Quantifier: Oarfish"
+    elif [ -z "$QUANTIFIER" ] || [ "$QUANTIFIER" == "oarfish" ]; then
+        echo "Quantifier: Oarfish (default)"
         Rscript $SCRIPT_DIR/bin/combine_oarfish_quants.R -e $ENSG_ID -m $TPM_minimum -s $samples_minimum -o $OUTPUT_NAME
     else
         echo "Error: Unknown quantifier '$QUANTIFIER'"
