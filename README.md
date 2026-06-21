@@ -31,7 +31,7 @@ Make the script executable and create a conda environment with required dependen
 ```
 cd IsoLamp
 chmod +x IsoLamp
-conda env create -f IsoLamp_env.yml
+bash Install_IsoLamp_env.sh
 conda activate IsoLamp
 ```
 
